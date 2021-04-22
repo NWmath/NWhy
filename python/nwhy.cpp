@@ -13,7 +13,9 @@
 #include <pybind11/stl.h> //auto copy between stl containers and python data structures
 #include <pybind11/stl_bind.h>
 #include <pybind11/cast.h>
-#include "convert_to_s_overlap.hpp"
+//#include "convert_to_s_overlap.hpp"
+#include "containers/slinegraph.hpp"
+#include "containers/nwhypergraph.hpp"
 #include <pybind11/stl_bind.h>
 #include <vector>
 
@@ -46,12 +48,26 @@ PYBIND11_MODULE(nwhy, m) {
         return new NWHypergraph<Index_t, Data_t>(x, y);
     }))
     .def(py::init<>([](py::array_t<Index_t, py::array::c_style | py::array::forcecast> &x, 
+    py::array_t<Index_t, py::array::c_style | py::array::forcecast> &y, 
+    py::array_t<Data_t, py::array::c_style | py::array::forcecast> &data) {
+        return new NWHypergraph<Index_t, Data_t>(x, y, data);
+    }))
+    .def(py::init<>([](py::array_t<Index_t, py::array::c_style | py::array::forcecast> &x, 
     py::array_t<Index_t, py::array::c_style | py::array::forcecast> &y,
     py::array_t<Data_t, py::array::c_style | py::array::forcecast> &data,
     bool collapse = false) {
         return new NWHypergraph<Index_t, Data_t>(x, y, data, collapse);
     }),
     py::arg("x"), py::arg("y"), py::arg("data"), py::arg("collapse") = false)
+    .def("collapse_edges", &NWHypergraph<Index_t, Data_t>::collapse_edges, 
+    "A function to collapse the edges into equivalence class of the hypergraph", 
+    py::arg("return_equivalence_class") = false)
+    .def("collapse_nodes", &NWHypergraph<Index_t, Data_t>::collapse_nodes, 
+    "A function to collapse the nodes into equivalence class of the hypergraph", 
+    py::arg("return_equivalence_class") = false)
+    .def("collapse_nodes_and_edges", &NWHypergraph<Index_t, Data_t>::collapse_nodes_and_edges, 
+    "A function to collapse the edges then, collapse nodes into equivalence class of the hypergraph", 
+    py::arg("return_equivalence_class") = false)
     //stats for hypergraph
     .def("edge_size_dist", &NWHypergraph<Index_t, Data_t>::edge_size_dist,
     "A function to get the edge size distribution of the hypergraph")
@@ -90,10 +106,13 @@ PYBIND11_MODULE(nwhy, m) {
     .def("s_linegraph", &NWHypergraph<Index_t, Data_t>::s_linegraph, 
     "A function which converts a hypergraph to its s line graph; if edges is true, then it is an edge linegraph",
     py::arg("s") = 1, py::arg("edges") = true)
+    .def("s_linegraphs", &NWHypergraph<Index_t, Data_t>::s_linegraphs, 
+    "A function which converts a hypergraph to its s line graphs; if edges is true, then it is an edge linegraph",
+    py::arg("l"), py::arg("edges") = true)
     //s_connected_component
-    .def("s_connected_components", py::overload_cast<Slinegraph<Index_t, Data_t> &, bool>(&NWHypergraph<Index_t, Data_t>::s_connected_components),
+    .def("s_connected_components", py::overload_cast<Slinegraph<Index_t, Data_t> &>(&NWHypergraph<Index_t, Data_t>::s_connected_components),
      "A function which finds the connected components for its s line graph",
-    py::arg("linegraph"), py::arg("return_singleton") = false)
+    py::arg("linegraph"))
     //s_distance
     .def("distance", py::overload_cast<Slinegraph<Index_t, Data_t> &, Index_t, Index_t>(&NWHypergraph<Index_t, Data_t>::distance),
      "A function which computes the distance from src to dest in its s line graph",
@@ -116,9 +135,20 @@ PYBIND11_MODULE(nwhy, m) {
     .def(py::init<>([](NWHypergraph<Index_t, Data_t>& g, int s, bool edges) {
         return new Slinegraph<Index_t, Data_t>(g, s, edges);
     }), "Init function", py::arg("g"), py::arg("s") = 1, py::arg("edges") = true)
+    .def(py::init<>([](
+    py::array_t<Index_t, py::array::c_style | py::array::forcecast> &x, 
+    py::array_t<Index_t, py::array::c_style | py::array::forcecast> &y,
+    py::array_t<Data_t, py::array::c_style | py::array::forcecast> &data,
+    int s, 
+    bool edges) {
+        return new Slinegraph<Index_t, Data_t>(x, y, data, s, edges);
+    }), "Constructor",
+    py::arg("x"), py::arg("y"), py::arg("data"), py::arg("s") = 1, py::arg("edges") = true)
     .def_readonly("s", &Slinegraph<Index_t, Data_t>::s_)
+    .def("get_singletons", &Slinegraph<Index_t, Data_t>::get_singletons,
+     "A function which finds the singletons for its s line graph")
     .def("s_connected_components", &Slinegraph<Index_t, Data_t>::s_connected_components,
-     "A function which finds the connected components for its s line graph", py::arg("return_singleton") = false)
+     "A function which finds the connected components for its s line graph")
     .def("is_s_connected", &Slinegraph<Index_t, Data_t>::is_s_connected,
     "A function which tests whether its s line graph is connected or not")
     .def("s_distance", &Slinegraph<Index_t, Data_t>::s_distance,
@@ -142,6 +172,6 @@ PYBIND11_MODULE(nwhy, m) {
     "A function to get the degree of a vertex in the slinegraph", py::arg("v"));
 
     //register version information in a module as below
-    py::object version = py::cast("0.0.10");
+    py::object version = py::cast("0.0.13");
     m.attr("_version") = version;
 }

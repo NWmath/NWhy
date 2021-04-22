@@ -23,11 +23,12 @@ target_sources(NW_HYPERGRAPH
   INTERFACE
   containers/edge_list_hy.hpp
   containers/compressed_hy.hpp
+  containers/nwhypergraph.hpp
+  containers/slinegraph.hpp
   io/hypergraph_io.hpp
   io/mmio.hpp
   util/slinegraph_helper.hpp
   s_overlap.hpp
-  convert_to_s_overlap.hpp
   algorithms/relabel_x.hpp
   algorithms/hyper_connected_components.hpp
   algorithms/hyper_breadth_first_search.hpp

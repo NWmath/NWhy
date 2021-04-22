@@ -31,10 +31,10 @@ print("olds:", olds)
 h = nwhy.NWHypergraph(row, col, data, collapse=True)
 #print(h)
 # 
-print("=====s_connected_component=====")
+print("=====s_linegraph=====")
 s1linegraph = h.s_linegraph(s=1, edges=True)
-ccs = h.s_connected_components(s1linegraph, return_singleton=True)
-ccs0 = s1linegraph.s_connected_components(return_singleton=True)
+print("=====s_connected_component=====")
+ccs0 = s1linegraph.s_connected_components()
 #s1linegraph.s_distance(s=1, source=0, edges=True)
 print("ccs0:", ccs0)
 
@@ -52,17 +52,24 @@ vertex=0
 neighborsofv2 = s1linegraph.s_neighbors(v=vertex)
 print("neighbors of vertex", vertex, "are:", neighborsofv2)
 
+# s_path
+
+
 # s_betweenness_centrality
 print("=====s_betweenness_centrality=====")
-s3linegraph = h.s_linegraph(s=3)
+#s1edgelinegraph = h.s_linegraph(s=1, edges=False)
 print("normalized:")
-print(s3linegraph.s_betweenness_centrality(normalized=True))
+print(s1linegraph.s_betweenness_centrality(normalized=True))
 print("unnormalized:")
-print(s3linegraph.s_betweenness_centrality(normalized=False))
+s3edgelinegraph = h.s_linegraph(s=3, edges=True)
+bc = s1linegraph.s_betweenness_centrality(normalized=False)
+print(bc)
+#for k, v in bc.items():
+#    print(k, ' : ', v)
 
 # s_closeness_centrality
 print("=====s_closeness_centrality=====")
-outofboundvertex = np.amax(row) + 1
+outofboundvertex = 11
 print(s1linegraph.s_closeness_centrality(vertex))
 print(s1linegraph.s_closeness_centrality(outofboundvertex))
 print(s1linegraph.s_closeness_centrality())
@@ -78,3 +85,26 @@ print("=====s_eccentricity=====")
 print(s1linegraph.s_eccentricity(2))
 print(s1linegraph.s_eccentricity(outofboundvertex))
 print(s1linegraph.s_eccentricity())
+
+
+# another way to construct s line graph
+
+srow = np.array([4592, 4601, 4601, 4605, 4605, 4609, 4611, 4612, 4612, 4613, 4613,
+       4615, 4615, 4616, 4616, 4617])
+scol = np.array([4611, 4617, 4618, 4617, 4618, 4618, 4617, 4617, 4618, 4616, 4617,
+       4617, 4618, 4617, 4618, 4618])
+sdata = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
+print("=====s_linegraph=====")
+linegraph = nwhy.Slinegraph(srow, scol, sdata, 15, True)
+print("=====s_connected_components=====")
+scc = linegraph.s_connected_components()
+print(scc)
+print("=====get_singletons=====")
+singletons = linegraph.get_singletons()
+print(singletons)
+
+print("=====s_betweenness_centrality=====")
+sbc = linegraph.s_betweenness_centrality(normalized=False)
+print(sbc)
+import gc
+gc.collect()

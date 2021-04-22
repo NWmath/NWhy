@@ -12,6 +12,11 @@
 # make VERBOSE=1
 # cmake --trace
 # cmake .. -DCMAKE_CXX_COMPILER=icpx
+# cmake .. -DCMAKE_BUILD_TYPE=Release (or Debug)
+# cmake .. -DNW_HYPERGRAPH_BUILD_BENCH=ON (or OFF)
+# cmake .. -NW_HYPERGRAPH_BUILD_PYBIND=OFF (or ON)
+# cmake .. -NW_HYPERGRAPH_USE_TBBMALLOC=ON (or OFF)
+# cmake .. -NW_HYPERGRAPH_BUILD_TOOLS=OFF (or ON)
 #
 ##########################################################################
 cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
@@ -65,13 +70,9 @@ option(NW_HYPERGRAPH_EXECUTION_POLICY "with(out) C++ parallel execution policy" 
 option(NW_HYPERGRAPH_BUILD_BENCH "Determines whether to build performance benchmarks." ON)
 option(NW_HYPERGRAPH_BUILD_PYBIND "Determines whether to build python binding modules." OFF)
 option(NW_HYPERGRAPH_USE_TBBMALLOC "Link to tbbmalloc" OFF)
+option(NW_HYPERGRAPH_BUILD_TOOLS "Determines whether to build tools." OFF)
 
 add_subdirectory(include)
-
-include(Date)
-include(Docopt)
-include(RangeV3)
-
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../NWut/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../NWgr/include)
@@ -79,8 +80,18 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../NWgr/include)
 
 if (NW_HYPERGRAPH_BUILD_BENCH)
   add_subdirectory(bench)
+  include(Date)
+  include(Docopt)
+  include(RangeV3)
 endif()
 
 if (NW_HYPERGRAPH_BUILD_PYBIND)
   add_subdirectory(python)
+endif()
+
+if (NW_HYPERGRAPH_BUILD_TOOLS)
+  add_subdirectory(tools)
+  include(Date)
+  include(Docopt)
+  include(RangeV3)
 endif()

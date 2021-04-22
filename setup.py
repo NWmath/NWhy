@@ -37,8 +37,7 @@ class CMakeBuild(build_ext):
         if not extdir.endswith(os.path.sep):
             extdir += os.path.sep
 
-        cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir,
-                      '-DPYTHON_EXECUTABLE=' + sys.executable]
+        cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir]
         cmake_args += ['-DCMAKE_C_COMPILER=gcc']
         cmake_args += ['-DCMAKE_CXX_COMPILER=g++']  
         # for Pybind api, we will not build benchmarks
@@ -65,17 +64,44 @@ class CMakeBuild(build_ext):
         subprocess.check_call(['cmake', ext.sourcedir] + cmake_args, cwd=self.build_temp, env=env)
         subprocess.check_call(['cmake', '--build', '.'] + build_args, cwd=self.build_temp)
 
+# read the contents of your README file
+from os import path
+this_directory = path.abspath(path.dirname(__file__))
+with open(path.join(this_directory, 'NWhyUserGuide.rst'), encoding='utf-8') as f:
+    long_description = f.read()
+
 setup(
     name='nwhy',
-    version='0.0.10',
+    version='0.0.14',
     author='Xu Tony Liu',
     author_email='xu.liu2@wsu.edu',
     description='NWhy project using pybind11 and CMake',
-    long_description='This is an alpha release',
-    license='3-Clause BSD license',
+    long_description=long_description,
+    long_description_content_type='text/x-rst',
+    url='https://pypi.org/project/nwhy/',
+    license='BSD license',
     platforms=["Linux", "Mac OS-X", "Unix"],
-    ext_modules=[CMakeExtension('covert_to_s_line_graph')], 
+    ext_modules=[CMakeExtension('')], 
     cmdclass=dict(build_ext=CMakeBuild),
-    python_requires='>=3.8',
+    python_requires='>=3.9',
     zip_safe=False,
+    options={"bdist_wheel": {"universal": True}},
+    classifiers=[
+    # How mature is this project? Common values are
+    #   3 - Alpha
+    #   4 - Beta
+    #   5 - Production/Stable
+    'Development Status :: 3 - Alpha',
+
+    # Indicate who your project is intended for
+    'Intended Audience :: Developers',
+    'Topic :: Software Development :: Build Tools',
+
+    # Pick your license as you wish (should match "license" above)
+    'License :: OSI Approved :: BSD License',
+
+    # Specify the Python versions you support here. In particular, ensure
+    # that you indicate whether you support Python 2, Python 3 or both.
+    'Programming Language :: Python :: 3.9',
+    ],
 )
