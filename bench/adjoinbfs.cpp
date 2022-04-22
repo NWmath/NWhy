@@ -5,9 +5,9 @@
  * @copyright SPDX-FileCopyrightText: 2022 University of Washington
  *
  * SPDX-License-Identifier: BSD-3-Clause
- * 
+ *
  * Author: Xu Tony Liu
- * 
+ *
  */
 
 #include "Log.hpp"
@@ -55,7 +55,7 @@ static constexpr const char USAGE[] =
 
 
 template<typename Graph, typename vertex_id_t = typename graph_traits<Graph>::vertex_id_type>
-size_t BU_step(Graph& g, std::vector<vertex_id_t>& parent, 
+size_t BU_step(Graph& g, std::vector<vertex_id_t>& parent,
 nw::graph::AtomicBitVector<>& front, nw::graph::AtomicBitVector<>& next) {
   nw::util::life_timer _(__func__);
   size_t num = g.max() + 1;    // number of hypernodes/hyperedges
@@ -68,7 +68,7 @@ nw::graph::AtomicBitVector<>& front, nw::graph::AtomicBitVector<>& next) {
         auto v = std::get<0>(x);
         if (front.atomic_get(v)) {
           //v has not been claimed
-          parent[u] = v;      
+          parent[u] = v;
           next.atomic_set(u);
           ++awake_count;
           return;
@@ -99,8 +99,8 @@ std::vector<vertex_id_t>& front, std::vector<vertex_id_t>& next) {
 }
 template<typename Vector>
 inline void queue_to_bitmap(Vector& queue, nw::graph::AtomicBitVector<>& bitmap) {
-  std::for_each(std::execution::par_unseq, queue.begin(), queue.end(), [&](auto&& u) { 
-    bitmap.atomic_set(u); 
+  std::for_each(std::execution::par_unseq, queue.begin(), queue.end(), [&](auto&& u) {
+    bitmap.atomic_set(u);
   });
 }
 template<typename Vector>
@@ -113,7 +113,7 @@ inline void bitmap_to_queue(nw::graph::AtomicBitVector<>& bitmap, Vector& queue)
 }
 
 template<class ExecutionPolicy, class Graph, class Transpose, typename vertex_id_t = typename graph_traits<Graph>::vertex_id_type>
-auto relabelhyperBFS_hybrid(ExecutionPolicy&& exec, vertex_id_t source_hyperedge, 
+auto relabelhyperBFS_hybrid(ExecutionPolicy&& exec, vertex_id_t source_hyperedge,
 Graph& g, Transpose& g_t, const size_t num_realedges, const size_t num_realnodes,
 size_t numpairs, int alpha = 15, int beta = 18) {
   size_t n = g.max() + 1;
@@ -169,7 +169,7 @@ size_t numpairs, int alpha = 15, int beta = 18) {
 }
 
 template<typename GraphN, typename GraphE, typename vertex_id_t = typename graph_traits<GraphN>::vertex_id_type>
-bool hyperBFSVerifier(GraphN& hypernodes, GraphE& hyperedges, vertex_id_t source_hyperedge, 
+bool hyperBFSVerifier(GraphN& hypernodes, GraphE& hyperedges, vertex_id_t source_hyperedge,
 std::vector<vertex_id_t>& parentE, std::vector<vertex_id_t>& parentN) {
   size_t num_hyperedges = hyperedges.max() + 1;
   size_t num_hypernodes = hypernodes.max() + 1;
@@ -319,7 +319,7 @@ int main(int argc, char* argv[]) {
       auto _ = set_n_threads(thread);
       for (auto&& id : ids) {
         for (auto&& source : sources) {
-          if (verbose) 
+          if (verbose)
             std::cout << "version " << id << std::endl;
           using Graph = nw::graph::adjacency<0>;
           using Transpose = nw::graph::adjacency<1>;
@@ -336,13 +336,13 @@ int main(int argc, char* argv[]) {
                   //for all the parent of hyperN, substract the offset
                   std::for_each(std::execution::par_unseq, nw::graph::counting_iterator(0ul), nw::graph::counting_iterator(N.size()), [&](auto i) {
                     N[i] -= num_realedges;
-                  }); 
+                  });
                 }
                 else {
                   //for all the parent of hyperE, substract the offset
                    std::for_each(std::execution::par_unseq, nw::graph::counting_iterator(0ul), nw::graph::counting_iterator(E.size()), [&](auto i) {
                     E[i] -= num_realnodes;
-                  }); 
+                  });
                 }
                 return std::tuple(N, E);
                 }
@@ -355,13 +355,13 @@ int main(int argc, char* argv[]) {
                   //for all the parent of hyperN, substract the offset
                   std::for_each(std::execution::par_unseq, nw::graph::counting_iterator(0ul), nw::graph::counting_iterator(N.size()), [&](auto i) {
                     N[i] -= num_realedges;
-                  }); 
+                  });
                 }
                 else {
                   //for all the parent of hyperE, substract the offset
                    std::for_each(std::execution::par_unseq, nw::graph::counting_iterator(0ul), nw::graph::counting_iterator(E.size()), [&](auto i) {
                     E[i] -= num_realnodes;
-                  }); 
+                  });
                 }
                 return std::tuple(N, E);
                 }
@@ -375,13 +375,13 @@ int main(int argc, char* argv[]) {
                   //for all the parent of hyperN, substract the offset
                   std::for_each(std::execution::par_unseq, nw::graph::counting_iterator(0ul), nw::graph::counting_iterator(N.size()), [&](auto i) {
                     N[i] -= num_realedges;
-                  }); 
+                  });
                 }
                 else {
                   //for all the parent of hyperE, substract the offset
                    std::for_each(std::execution::par_unseq, nw::graph::counting_iterator(0ul), nw::graph::counting_iterator(E.size()), [&](auto i) {
                     E[i] -= num_realnodes;
-                  }); 
+                  });
                 }
                 return std::tuple(N, E);
                 }
@@ -394,13 +394,13 @@ int main(int argc, char* argv[]) {
                   //for all the parent of hyperN, substract the offset
                   std::for_each(std::execution::par_unseq, nw::graph::counting_iterator(0ul), nw::graph::counting_iterator(N.size()), [&](auto i) {
                     N[i] -= num_realedges;
-                  }); 
+                  });
                 }
                 else {
                   //for all the parent of hyperE, substract the offset
                    std::for_each(std::execution::par_unseq, nw::graph::counting_iterator(0ul), nw::graph::counting_iterator(E.size()), [&](auto i) {
                     E[i] -= num_realnodes;
-                  }); 
+                  });
                 }
                 return std::tuple(N, E);
                 }
