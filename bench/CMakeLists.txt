@@ -98,3 +98,6 @@ target_link_libraries(top.exe bench)
 
 add_executable(imdb.exe imdb.cpp)
 target_link_libraries(imdb.exe bench xtensor)
+
+add_executable(imdbf.exe imdbf.cpp)
+target_link_libraries(imdbf.exe bench xtensor)
