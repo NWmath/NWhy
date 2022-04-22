@@ -182,35 +182,25 @@ int main(int argc, char* argv[]) {
 
     auto&& degrees = H.degrees();
     
-    std::vector<std::vector<std::tuple<vertex_id_t, vertex_id_t>>> two_graphs(num_bins);
-    if (1 <= s_value) {
-      tbb::parallel_for(tbb::blocked_range<vertex_id_t>(0, H.size()), [&](tbb::blocked_range<vertex_id_t>& r) {
-        int worker_index = tbb::this_task_arena::current_thread_index();    
-        for (auto hyperE = r.begin(), e = r.end(); hyperE != e; ++hyperE) {
-            if (degrees[hyperE] < s_value) continue;
-            std::unordered_map<size_t, size_t> K;
-            for (auto&& [hyperN] : H[hyperE]) {
-              for (auto&& [anotherhyperE] : G[hyperN]) {
-                if (degrees[anotherhyperE] < s_value) continue;
-                if (hyperE < anotherhyperE) ++K[anotherhyperE];
-              }
-            }
-
-            for (auto&& [anotherhyperE, val] : K) {
-              if (val >= s_value) {
-                two_graphs[worker_index].push_back(
-                    std::make_tuple<vertex_id_t, vertex_id_t>(
-                        std::forward<vertex_id_t>(hyperE),
-                        std::forward<vertex_id_t>(anotherhyperE)));
-                // std::cout << names_map_transpose[hyperE] << " and "
-                // << names_map_transpose[anotherhyperE] << " has "
-                // << val << " collaborations" << std::endl;
-              }
-            }
-          }
-        },
-        tbb::auto_partitioner());
+    // std::vector<std::vector<std::tuple<vertex_id_t, vertex_id_t>>> two_graphs(num_bins);
+    size_t M = edges.size();
+    using linegraph_t = std::vector<std::vector<std::tuple<vertex_id_t, vertex_id_t>>>;
+    linegraph_t two_graphs(num_bins);
+    using container_t = std::unordered_map<size_t, size_t>;
+    if (1 < s_value) {
+      {
+        map::to_two_graph_map_blocked<container_t>(
+          std::forward<linegraph_t>(two_graphs), H, G, degrees,
+          s_value, num_bins);
+      }
     }
+    else {
+      {
+        efficient::to_two_graph_blocked(std::forward<linegraph_t>(two_graphs),
+                                        H, G, M / num_bins, 0, M);
+      }
+    }
+
     t5.stop();
     std::cout << t5 << std::endl;    
 
