@@ -35,7 +35,7 @@ static constexpr const char USAGE[] =
     R"(imdb.exe: imdb benchmark driver.
   Usage:
       imdb.exe (-h | --help)
-      imdb.exe [--datafolder FILE] [--title FILE] [--name FILE] [--principal FILE] [-B NUM] [--sstart NUM] [--sstop NUM] [--sstep NUM] [--norm NUM] [--styear NUM] [--enyear NUM] [-dvV] [--log FILE] [--log-header] [THREADS]...
+      imdb.exe [--datafolder FILE] [--title FILE] [--name FILE] [--principal FILE] [-B NUM] [--sstart NUM] [--sstop NUM] [--sstep NUM] [--norm] [--styear NUM] [--enyear NUM] [-dvV] [--log FILE] [--log-header] [THREADS]...
 
   Options:
       -h, --help            show this screen
@@ -49,7 +49,7 @@ static constexpr const char USAGE[] =
       --sstart NUM          s value of soverlap [default: 130]
       --sstop NUM           s value of soverlap [default: 1]
       --sstep NUM           s value of soverlap [default: 1]
-      --norm NUM            normalize brande (1 or 0) [default: 1]
+      --norm                normalize centrality scores [default: false]
       --log FILE            log times to a file
       --log-header          add a header to the log file
       -d, --debug           run in debug mode
@@ -64,7 +64,7 @@ int main(int argc, char* argv[]) {
   bool debug   = args["--debug"].asBool();
   long num_bins= args["-B"].asLong();
 
-  bool norm_Brande = (args["--norm"].asLong() == 1) ? true : false;
+  bool norm_Brande = args["--norm"].asBool();
 
   std::vector threads = parse_n_threads(args["THREADS"].asStringList());
   auto _ = set_n_threads(threads[0]);
