@@ -25,13 +25,18 @@ static constexpr const char USAGE[] =
     R"(imdb2mtx.exe: create mtx file from imdb tsv files.
   Usage:
       imdb2mtx.exe (-h | --help)
-      imdb2mtx.exe [--title FILE] [--name FILE] [--principal FILE] [-o FILE] [-dvV] [--log FILE] [--log-header] [THREADS]...
+      imdb2mtx.exe [--datafolder FILE] [--title FILE] [--name FILE] [--principal FILE] [--akas FILE] [--region FILE] [--styear NUM] [--enyear NUM] [-o FILE] [-dvV] [--log FILE] [--log-header] [THREADS]...
 
   Options:
       -h, --help            show this screen
-      --title FILE          movie title file path
-      --name FILE           actor name file path
-      --principal FILE      movie to actor file path
+      --datafolder FILE     folder path to all datafiles (title.basics.tsv, name.basics.tsv and title.principals.tsv) [default: .]
+      --title FILE          movie title file path [default: title.basics.tsv]
+      --name FILE           actor name file path [default: name.basics.tsv]
+      --principal FILE      movie to actor file path [default: title.principals.tsv]
+      --akas FILE           title attributes file [default: title.akas.tsv]
+      --region FILE         filter titles by region, cannot be used with mtx [default: ]
+      --styear NUM          start year filter, cannot be used with mtx [default: 1870]
+      --enyear NUM          end year filter, cannot be used with mtx [default: 2030]
       -o FILE               matrix market output file path
       -d, --debug           run in debug mode
       -V, --verbose         run in verbose mode
@@ -44,13 +49,51 @@ int main(int argc, char* argv[]) {
   bool verbose = args["--verbose"].asBool();
   bool debug   = args["--debug"].asBool();
   std::string output_file = args["-o"].asString();
+
+  long start_year= args["--styear"].asLong();
+  long end_year  = args["--enyear"].asLong();
   
   nw::graph::bi_edge_list<nw::graph::directedness::directed> edges(0);
   using vertex_id_t = vertex_id_t<decltype(edges)>;
 
-  std::string title_basics_tsv = args["--title"].asString();
-  std::string name_basics_tsv = args["--name"].asString();
-  std::string title_principals_tsv = args["--principal"].asString();
+  std::string datafolder                = args["--datafolder"].asString();
+  std::string title_basics_tsv_args     = args["--title"].asString();
+  std::string name_basics_tsv_args      = args["--name"].asString();
+  std::string title_principals_tsv_args = args["--principal"].asString();  
+  std::string title_akas_tsv_args       = args["--akas"].asString();  
+
+  std::string title_basics_tsv     = datafolder + "/" + title_basics_tsv_args;
+  std::string name_basics_tsv      = datafolder + "/" + name_basics_tsv_args;
+  std::string title_principals_tsv = datafolder + "/" + title_principals_tsv_args;
+  std::string title_akas_tsv       = datafolder + "/" + title_akas_tsv_args;
+
+  std::string region = args["--region"].asString();
+
+  // load regions first to filter titles if needed
+  std::map<std::string, vertex_id_t> region_map;
+  bool check_region = false;
+
+  if (! region.empty()){
+    nw::util::timer r1("get regions");
+    check_region = true;
+    std::ifstream title_akas_stream(title_akas_tsv);
+    auto title_akas = xt::load_csv<std::string>(title_akas_stream, '\t');
+    auto akas_shp = title_akas.shape();
+
+    for (vertex_id_t ia = 0; ia < akas_shp[0]; ++ia)
+    {
+      if (title_akas(ia, 1) != "1") {
+        continue;
+      }
+      if (title_akas(ia, 3) != region) {
+        continue;
+      }
+      region_map[title_akas(ia, 0)] = ia;
+    }
+
+    r1.stop();
+    std::cout << r1 << std::endl;
+  } 
 
   std::ifstream                 title_basics_stream(title_basics_tsv);
   auto                          titles     = xt::load_csv<std::string>(title_basics_stream, '\t');
@@ -60,6 +103,22 @@ int main(int argc, char* argv[]) {
   //skip the header by starting from i=1
   for (vertex_id_t i = 1; i < titles_shp[0]; ++i) {
     if (titles(i, 1) == "movie") {
+      if (start_year > 1870 or end_year < 2030) {
+        if (titles(i, 5) == "\\N" ){
+          continue;
+        }
+        if (std::stol(titles(i, 5)) < start_year or std::stol(titles(i, 5)) > end_year) {
+          continue;
+        }
+      }
+      if (check_region){
+        // if the region does not show, then it's not in that region.
+        auto region_title = region_map.find(titles(i, 0));
+        if (region_title == region_map.end()){
+          continue;
+        }
+      }
+      
       titles_map[titles(i, 0)] = i;
       titles_map_transpose[i] = titles(i, 0);
     }
