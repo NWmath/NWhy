@@ -75,6 +75,9 @@ target_link_libraries(adjoinbfs.exe bench)
 add_executable(hycc.exe hypercc.cpp)
 target_link_libraries(hycc.exe bench)
 
+add_executable(adjoinbc.exe adjoinbc.cpp)
+target_link_libraries(adjoinbc.exe bench)
+
 add_executable(adjoincc.exe adjoincc.cpp)
 target_link_libraries(adjoincc.exe bench)
 
