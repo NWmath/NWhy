@@ -97,7 +97,15 @@ int main(int argc, char* argv[]) {
           switch (id) {
             case 0:
               record([&] { 
+                //parallel version
                 auto l = nw::graph::exact_brandes_bc<score_t, accum_t, Graph>(g, thread);
+                return splitLabeling<ExecutionPolicy, score_t>(std::execution::par_unseq, l, num_realedges, num_realnodes);
+              });
+              break;
+            case 1:
+              record([&] { 
+                //sequential version, can only handle small hypergraphs
+                auto l = nw::graph::brandes_bc<Graph, score_t, accum_t>(g);
                 return splitLabeling<ExecutionPolicy, score_t>(std::execution::par_unseq, l, num_realedges, num_realnodes);
               });
               break;
