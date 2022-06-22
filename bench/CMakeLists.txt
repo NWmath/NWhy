@@ -101,3 +101,6 @@ target_link_libraries(imdb.exe bench xtensor)
 
 add_executable(imdbf.exe imdbf.cpp)
 target_link_libraries(imdbf.exe bench xtensor)
+
+add_executable(dblp.exe dblp.cpp)
+target_link_libraries(dblp.exe bench xtensor)
