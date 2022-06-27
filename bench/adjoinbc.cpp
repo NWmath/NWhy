@@ -30,7 +30,7 @@ static constexpr const char USAGE[] =
     R"(adjoinbc.exe: hypergraph betweenness centrality benchmark driver.
   Usage:
       adjoinbc.exe (-h | --help)
-      adjoinbc.exe [-f FILE...] [--version ID...] [-n NUM] [--succession STR] [--relabel] [--clean] [--direction DIR] [-dvV] [--log FILE] [--log-header] [THREADS]...
+      adjoinbc.exe [-f FILE...] [--version ID...] [-n NUM] [--succession STR] [--relabel] [--normalize] [--direction DIR] [-dvV] [--log FILE] [--log-header] [THREADS]...
 
   Options:
       -h, --help            show this screen
@@ -38,7 +38,7 @@ static constexpr const char USAGE[] =
       -f FILE               input file paths (can have multiples)
       -n NUM                number of trials [default: 1]
       --relabel             relabel the graph or not
-      -c, --clean           clean the graph or not
+      --normalize           normalize the betweenness centrality score or not [default: false]
       --direction DIR       graph relabeling direction - ascending/descending [default: descending]
       --succession STR      successor/predecessor [default: successor]
       --log FILE            log times to a file
@@ -56,6 +56,7 @@ int main(int argc, char* argv[]) {
   bool verbose = args["--verbose"].asBool();
   bool debug   = args["--debug"].asBool();
   long trials  = args["-n"].asLong() ?: 1;
+  bool normalize = args["--normalize"].asBool();
 
   std::vector<long> ids     = parse_ids(args["--version"].asStringList());
   std::vector<long> threads = parse_n_threads(args["THREADS"].asStringList());
@@ -85,6 +86,18 @@ int main(int argc, char* argv[]) {
       for (auto&& id : ids) {
         auto verifier = [&](auto&& result) {
           auto&& [N, E] = result;
+          if(verbose) {
+            std::cout << "For each vertex: " << std::endl;
+            for (auto score : N)
+            {
+              std::cout << score << std::endl;
+            }
+            std::cout << "For each hyperedge: " << std::endl;
+            for (auto score : E)
+            {
+              std::cout << score << std::endl;
+            }
+          }
           //TODO use betweenness centrality score of hyperedges/vertices
         };
 
@@ -98,14 +111,23 @@ int main(int argc, char* argv[]) {
             case 0:
               record([&] { 
                 //parallel version
-                auto l = nw::graph::exact_brandes_bc<score_t, accum_t, Graph>(g, thread);
+                auto l = nw::graph::exact_brandes_bc<score_t, 
+                accum_t, 
+                Graph,
+                ExecutionPolicy, 
+                ExecutionPolicy 
+                >(g, 
+                thread, 
+                std::forward<ExecutionPolicy>(std::execution::par_unseq), 
+                std::forward<ExecutionPolicy>(std::execution::par_unseq), 
+                normalize);
                 return splitLabeling<ExecutionPolicy, score_t>(std::execution::par_unseq, l, num_realedges, num_realnodes);
               });
               break;
             case 1:
               record([&] { 
                 //sequential version, can only handle small hypergraphs
-                auto l = nw::graph::brandes_bc<Graph, score_t, accum_t>(g);
+                auto l = nw::graph::brandes_bc<Graph, score_t, accum_t>(g, normalize);
                 return splitLabeling<ExecutionPolicy, score_t>(std::execution::par_unseq, l, num_realedges, num_realnodes);
               });
               break;
